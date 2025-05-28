@@ -9,14 +9,16 @@ from torchvision import transforms
 from models.swin_transformer_v2 import SwinTransformerV2
 
 # ===================== 設定參數 =====================
-image_folder = f"{Path.home()}/datasets/glass/val/Lens"
-model_path = f"{Path.home()}/models/model.pth"
+dataset_name = "glass"
+val_class_name = "Lens"
+image_folder = f"{Path.home()}/datasets/{dataset_name}/val/{val_class_name}"
+model_path = f"{Path.home()}/models/model_{dataset_name}.pth"
 # metadata_path = r"D:/桌面/AI vscode/2025_05_27-04_35_13/metadata.json"
 save_folder = f"{Path.home()}/datasets_result/Lens"
 save_json_path = os.path.join(save_folder, "results.json")
 
 #  train 的上層資料夾才對（包含所有類別資料夾）
-with open(f"{Path.home()}/models/model.json", "r") as fd:
+with open(f"{Path.home()}/models/model_{dataset_name}.json", "r") as fd:
     class_names = json.loads(fd.read()).get("class_names")
 print(class_names)
 num_classes = len(class_names)
