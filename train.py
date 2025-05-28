@@ -1,34 +1,33 @@
-import os
 import json
+import os
 from pathlib import Path
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from models.swin_transformer_v2 import SwinTransformerV2
 from tqdm import tqdm
+
+from models.swin_transformer_v2 import SwinTransformerV2
 
 
 def main():
     # ===================== 基本設定 =====================
-    data_dir = f"{Path.home()}/datasets/glass/train"
-    num_epochs = 30
+    data_dir = f"{Path.home()}/datasets/fish/train"
+    num_epochs = 100
     batch_size = 32
     lr = 1e-4
     num_workers = os.cpu_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # ===================== 資料預處理 =====================
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5]*3, [0.5]*3)
-    ])
+    transform = transforms.Compose(
+        [transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize([0.5] * 3, [0.5] * 3)]
+    )
 
     train_dataset = datasets.ImageFolder(root=data_dir, transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     num_classes = len(train_dataset.classes)
-    idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
     print(train_dataset.classes)
     with open(f"{Path.home()}/models/model.json", "w") as fd:
         thing_class = {"class_names": train_dataset.classes}
@@ -66,6 +65,7 @@ def main():
         correct = 0
         total = 0
 
+        # Train one epoch - pass through the entire dataset once
         for images, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}"):
             images, labels = images.to(device), labels.to(device)
 
@@ -81,15 +81,17 @@ def main():
             # 計算 top-2 命中數
             correct += (top2_indices == labels.view(-1, 1)).any(dim=1).sum().item()
 
-
             total += labels.size(0)
-            #correct += top2_indices.eq(labels).sum().item()
+            # correct += top2_indices.eq(labels).sum().item()
+        print(
+            f"Epoch {epoch+1}: TrainLoss={running_loss/len(train_loader):.4f}, TrainAccuracy={100.*correct/total:.2f}%"
+        )
 
-        print(f"Epoch {epoch+1}: Loss={running_loss/len(train_loader):.4f}, Accuracy={100.*correct/total:.2f}%")
+        # TODO: Validate the model and print the score
 
     # ===================== 儲存模型 =====================
     torch.save(model.state_dict(), f"{Path.home()}/models/model.pth")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

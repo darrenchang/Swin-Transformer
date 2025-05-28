@@ -1,16 +1,17 @@
-import torch
-from pathlib import Path
-from torchvision import transforms
-from PIL import Image, ImageDraw, ImageFont
-from models.swin_transformer_v2 import SwinTransformerV2
-import timm
-import os
 import json
+import os
+from pathlib import Path
+
+import torch
+from PIL import Image, ImageDraw, ImageFont
+from torchvision import transforms
+
+from models.swin_transformer_v2 import SwinTransformerV2
 
 # ===================== 設定參數 =====================
 image_folder = f"{Path.home()}/datasets/glass/val/Lens"
 model_path = f"{Path.home()}/models/model.pth"
-#metadata_path = r"D:/桌面/AI vscode/2025_05_27-04_35_13/metadata.json"
+# metadata_path = r"D:/桌面/AI vscode/2025_05_27-04_35_13/metadata.json"
 save_folder = f"{Path.home()}/datasets_result/Lens"
 save_json_path = os.path.join(save_folder, "results.json")
 
@@ -51,7 +52,7 @@ model = SwinTransformerV2(
 # 移除 head 層（若存在）
 state_dict = checkpoint
 for k in list(state_dict.keys()):
-    if 'head.fc' in k:
+    if "head.fc" in k:
         print(f"刪除 {k} 權重")
         del state_dict[k]
 
@@ -59,28 +60,29 @@ model.load_state_dict(state_dict, strict=False)
 model.eval().to(device)
 
 # ===================== 載入 metadata.json =====================
-#with open(metadata_path, "r") as f:
+# with open(metadata_path, "r") as f:
 #    metadata = json.load(f)
 
-#uuid = metadata.get("uuid", "unknown")
-#snapshot_from = metadata.get("snapshot_from", "unknown")
-#model_config = metadata.get("model_config", "unknown")
+# uuid = metadata.get("uuid", "unknown")
+# snapshot_from = metadata.get("snapshot_from", "unknown")
+# model_config = metadata.get("model_config", "unknown")
 
 # ===================== 預處理 =====================
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])
-])
+transform = transforms.Compose(
+    [
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ]
+)
 
 # ===================== 開始預測 =====================
 results = []
 
 for filename in os.listdir(image_folder):
-    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
         img_path = os.path.join(image_folder, filename)
-        img = Image.open(img_path).convert('RGB')
+        img = Image.open(img_path).convert("RGB")
         input_tensor = transform(img).unsqueeze(0).to(device)
 
         with torch.no_grad():
@@ -99,10 +101,9 @@ for filename in os.listdir(image_folder):
         draw = ImageDraw.Draw(img)
 
         # 根據圖片寬度決定字體大小與 padding（整體再小一點）
-        font_size = max(10, img.width //  30)
+        font_size = max(10, img.width // 30)
         padding = max(2, img.width // 150)
         margin = max(3, img.width // 100)
-
 
         try:
             font = ImageFont.truetype("arial.ttf", font_size)
@@ -110,7 +111,7 @@ for filename in os.listdir(image_folder):
             font = ImageFont.load_default()
 
         text = f"Predicted: {predicted_class}"
-        #text = f"Predicted: {predicted_class}\nFrom: {snapshot_from}"
+        # text = f"Predicted: {predicted_class}\nFrom: {snapshot_from}"
         lines = text.split("\n")
         line_heights = []
         line_widths = []
@@ -131,10 +132,7 @@ for filename in os.listdir(image_folder):
         y = img.height - total_height - 2 * padding - margin
 
         # 畫背景框（白底）
-        draw.rectangle(
-            [x - padding, y - padding, x + max_width + padding, y + total_height + padding],
-            fill="white"
-        )
+        draw.rectangle([x - padding, y - padding, x + max_width + padding, y + total_height + padding], fill="white")
 
         # 寫上每行文字
         current_y = y
@@ -148,20 +146,21 @@ for filename in os.listdir(image_folder):
         # ========== 儲存 JSON 結果 ==========
         result_entry = {
             "filename": filename,
-            #"uuid": uuid,
+            # "uuid": uuid,
             "predicted_class": predicted_class,
             "top2": [
                 {"label": top2_classes[0], "score": round(top2_probs[0].item(), 6)},
                 {"label": top2_classes[1], "score": round(top2_probs[1].item(), 6)},
-            ]
+            ],
         }
         results.append(result_entry)
-        
+
         # 把印出結果放在這裡，確保每張圖都會印
         print(f"檔案: {filename}")
         print(f"Top2索引: {top2_indices}")
         print(f"Top2類別: {top2_classes}")
         print(f"預測結果: {predicted_class}")
+        print("")
 
 # 儲存至 results.json
 with open(save_json_path, "w", encoding="utf-8") as f:
