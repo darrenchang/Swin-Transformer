@@ -1,4 +1,6 @@
 import os
+import json
+from pathlib import Path
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -7,12 +9,14 @@ import timm
 from tqdm import tqdm
 from collections import defaultdict
 
+
 def main():
     # ===================== 基本設定 =====================
-    data_dir = r"D:/桌面/AI vscode/cover_tap/datasets"
-    num_epochs = 10
+    data_dir = f"{Path.home()}/datasets/glass/train"
+    num_epochs = 30
     batch_size = 32
     lr = 1e-4
+    num_workers = os.cpu_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # ===================== 資料預處理 =====================
@@ -23,9 +27,13 @@ def main():
     ])
 
     train_dataset = datasets.ImageFolder(root=data_dir, transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     num_classes = len(train_dataset.classes)
     idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
+    print(train_dataset.classes)
+    with open(f"{Path.home()}/models/model.json", "w") as fd:
+        thing_class = {"class_names": train_dataset.classes}
+        fd.write(json.dumps(thing_class))
 
     # ===================== 建立模型 =====================
     model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=True, num_classes=num_classes)
@@ -35,7 +43,6 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # ===================== 訓練迴圈 =====================
-    num_epochs = 30  # 訓練次數改為30次
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -64,7 +71,8 @@ def main():
         print(f"Epoch {epoch+1}: Loss={running_loss/len(train_loader):.4f}, Accuracy={100.*correct/total:.2f}%")
 
     # ===================== 儲存模型 =====================
-    torch.save(model.state_dict(), "swin_transformer_tiny3.pth")
+    torch.save(model.state_dict(), f"{Path.home()}/models/model.pth")
+
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,5 @@
 import torch
+from pathlib import Path
 from torchvision import transforms
 from PIL import Image, ImageDraw, ImageFont
 import timm
@@ -6,16 +7,16 @@ import os
 import json
 
 # ===================== 設定參數 =====================
-image_folder = r"D:/桌面/AI vscode/cover_tap/datasets/val/OutCircle"
-model_path = "swin_transformer_tiny3.pth"
-train_dir = r"D:/桌面/AI vscode/cover_tap/datasets/train/OutCircle"
+image_folder = f"{Path.home()}/datasets/glass/val/Lens"
+model_path = f"{Path.home()}/models/model.pth"
 #metadata_path = r"D:/桌面/AI vscode/2025_05_27-04_35_13/metadata.json"
-save_folder = r"D:/桌面/AI vscode/cover_tap/datasets/result/OutCircle"
+save_folder = f"{Path.home()}/datasets_result/Lens"
 save_json_path = os.path.join(save_folder, "results.json")
 
 #  train 的上層資料夾才對（包含所有類別資料夾）
-class_names = sorted(os.listdir(os.path.dirname(train_dir)))
-
+with open(f"{Path.home()}/models/model.json", "r") as fd:
+    class_names = json.loads(fd.read()).get("class_names")
+print(class_names)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.makedirs(save_folder, exist_ok=True)
@@ -62,7 +63,9 @@ for filename in os.listdir(image_folder):
 
         with torch.no_grad():
             outputs = model(input_tensor)
+            print(f"outputs: {outputs}")
             probabilities = torch.softmax(outputs, dim=1).squeeze(0)
+            print(f"probabilities: {probabilities}")
 
             # 取得 Top2
             top2_probs, top2_indices = torch.topk(probabilities, k=2)
