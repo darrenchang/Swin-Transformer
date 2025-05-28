@@ -15,7 +15,7 @@ def main():
     # ===================== 基本設定 =====================
     dataset_name = "glass"
     data_dir = f"{Path.home()}/datasets/{dataset_name}/train"
-    num_epochs = 30
+    num_epochs = 1
     batch_size = 32
     lr = 1e-4
     num_workers = os.cpu_count()
@@ -76,6 +76,15 @@ def main():
 
             outputs = model(images)
             loss = criterion(outputs, labels)
+            print(f"loss_1: {loss}")
+            print(f"{len(outputs)} {len(labels)}")
+            print(f"dim_outputs: {outputs.shape} dim_labels: {labels.shape}")
+            print("labels", labels)
+            # print(torch.randn(outputs.shape, requires_grad=True))
+            criterion_2 = nn.BCEWithLogitsLoss()
+            loss_2 = criterion_2(outputs, torch.randn(outputs.shape, requires_grad=True).to(device))
+            print(f"loss_2: {loss_2}")
+            loss = loss_2
 
             optimizer.zero_grad()
             loss.backward()
