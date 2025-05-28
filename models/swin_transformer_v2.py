@@ -531,7 +531,8 @@ class SwinTransformerV2(nn.Module):
                  window_size=7, mlp_ratio=4., qkv_bias=True,
                  drop_rate=0., attn_drop_rate=0., drop_path_rate=0.1,
                  norm_layer=nn.LayerNorm, ape=False, patch_norm=True,
-                 use_checkpoint=False, pretrained_window_sizes=[0, 0, 0, 0], **kwargs):
+                 use_checkpoint=False, pretrained_window_sizes=[0, 0, 0, 0],
+                 device=torch.device("cpu"), **kwargs):
         super().__init__()
 
         self.num_classes = num_classes
@@ -541,6 +542,7 @@ class SwinTransformerV2(nn.Module):
         self.patch_norm = patch_norm
         self.num_features = int(embed_dim * 2 ** (self.num_layers - 1))
         self.mlp_ratio = mlp_ratio
+        self.device = device
 
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed(

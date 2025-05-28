@@ -52,6 +52,7 @@ def main():
         patch_norm=True,
         use_checkpoint=False,
         pretrained_window_sizes=[0, 0, 0, 0],
+        device=device,
     )
     model = model.to(device)
 
