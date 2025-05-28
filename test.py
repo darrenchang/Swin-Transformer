@@ -95,6 +95,7 @@ for filename in os.listdir(image_folder):
             print(f"probabilities: {probabilities}")
             probabilities2 = torch.sigmoid(outputs).squeeze(0)
             print(f"probabilities2: {probabilities2}")
+            probabilities = probabilities2
 
             # 取得 Top2
             top2_probs, top2_indices = torch.topk(probabilities, k=2)
