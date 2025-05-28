@@ -2,6 +2,7 @@ import torch
 from pathlib import Path
 from torchvision import transforms
 from PIL import Image, ImageDraw, ImageFont
+from models.swin_transformer_v2 import SwinTransformerV2
 import timm
 import os
 import json
@@ -17,6 +18,7 @@ save_json_path = os.path.join(save_folder, "results.json")
 with open(f"{Path.home()}/models/model.json", "r") as fd:
     class_names = json.loads(fd.read()).get("class_names")
 print(class_names)
+num_classes = len(class_names)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.makedirs(save_folder, exist_ok=True)
@@ -24,7 +26,26 @@ os.makedirs(save_folder, exist_ok=True)
 # ===================== 載入模型 =====================
 assert os.path.exists(model_path), f"模型檔不存在：{model_path}"
 checkpoint = torch.load(model_path)
-model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=False, num_classes=len(class_names))
+# model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=False, num_classes=len(class_names))
+model = SwinTransformerV2(
+    img_size=224,
+    patch_size=4,
+    in_chans=3,
+    num_classes=num_classes,
+    embed_dim=96,
+    depths=[2, 2, 6, 2],
+    num_heads=[3, 6, 12, 24],
+    window_size=7,
+    mlp_ratio=4,
+    qkv_bias=True,
+    drop_rate=0,
+    drop_path_rate=0.1,
+    ape=False,
+    patch_norm=True,
+    use_checkpoint=False,
+    pretrained_window_sizes=[0, 0, 0, 0],
+)
+
 
 # 移除 head 層（若存在）
 state_dict = checkpoint

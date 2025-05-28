@@ -5,9 +5,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-import timm
+from models.swin_transformer_v2 import SwinTransformerV2
 from tqdm import tqdm
-from collections import defaultdict
 
 
 def main():
@@ -36,7 +35,24 @@ def main():
         fd.write(json.dumps(thing_class))
 
     # ===================== 建立模型 =====================
-    model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=True, num_classes=num_classes)
+    model = SwinTransformerV2(
+        img_size=224,
+        patch_size=4,
+        in_chans=3,
+        num_classes=num_classes,
+        embed_dim=96,
+        depths=[2, 2, 6, 2],
+        num_heads=[3, 6, 12, 24],
+        window_size=7,
+        mlp_ratio=4,
+        qkv_bias=True,
+        drop_rate=0,
+        drop_path_rate=0.1,
+        ape=False,
+        patch_norm=True,
+        use_checkpoint=False,
+        pretrained_window_sizes=[0, 0, 0, 0],
+    )
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
